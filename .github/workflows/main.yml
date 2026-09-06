@@ -1,0 +1,47 @@
+name: Generar APK Vuelos Internacionales
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Descomprimir proyecto
+        run: |
+          mkdir proyecto
+          unzip vuelos_internacionales_profesionales.zip -d proyecto
+
+      - name: Buscar proyecto Flutter
+        run: |
+          PUBSPEC=$(find proyecto -name pubspec.yaml | head -n 1)
+          APP_DIR=$(dirname "$PUBSPEC")
+          echo "APP_DIR=$APP_DIR" >> $GITHUB_ENV
+
+      - name: Instalar dependencias
+        run: |
+          cd "$APP_DIR"
+          flutter pub get
+
+      - name: Compilar APK
+        run: |
+          cd "$APP_DIR"
+          flutter build apk --release
+
+      - name: Guardar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Vuelos-Internacionales-APK
+          path: ${{ env.APP_DIR }}/build/app/outputs/flutter-apk/app-release.apk
